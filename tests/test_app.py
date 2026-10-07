@@ -1,25 +1,21 @@
-import unittest
-import json
-from app import app, TASKS
+"""API tests that need no model and no internet."""
+from app import app
 
-class TestWebApp(unittest.TestCase):
-    def setUp(self):
-        self.client = app.test_client()
-        self.client.testing = True
 
-    def test_index_route(self):
-        response = self.client.get('/')
-        self.assertEqual(response.status_code, 200)
-        self.assertIn(b'FAIR SQUARE', response.data)
-        self.assertIn(b'CHESS ENGINE ASSISTANCE DETECTION PIPELINE', response.data)
+def test_health():
+    r = app.test_client().get("/api/health")
+    assert r.status_code == 200 and r.get_json()["status"] == "ok"
 
-    def test_chesscom_api_validation(self):
-        response = self.client.post('/api/analyze/chesscom', json={})
-        self.assertEqual(response.status_code, 400)
 
-    def test_pgn_api_validation(self):
-        response = self.client.post('/api/analyze/pgn', json={})
-        self.assertEqual(response.status_code, 400)
+def test_rejects_bad_username():
+    r = app.test_client().post("/api/analyze", json={"username": "bad name!", "games": 20})
+    assert r.status_code == 400
 
-if __name__ == "__main__":
-    unittest.main()
+
+def test_rejects_out_of_range_games():
+    r = app.test_client().post("/api/analyze", json={"username": "someone", "games": 500})
+    assert r.status_code == 400
+
+
+def test_index_page_loads():
+    assert app.test_client().get("/").status_code == 200

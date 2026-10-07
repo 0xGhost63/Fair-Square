@@ -1,0 +1,9 @@
+{
+  "cv_auc": {
+    "logistic_regression": 0.5498607907632478,
+    "random_forest": 0.5255144365720325
+  },
+  "selected": "logistic_regression",
+  "train_rows": 2150,
+  "test_rows": 587
+}

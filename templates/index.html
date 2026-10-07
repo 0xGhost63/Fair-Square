@@ -1,147 +1,159 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="light">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>FAIR SQUARE | Chess Engine Assistance Detector</title>
-  <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
-  <link rel="stylesheet" href="/static/css/neo_brutalism.css">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>CHESS CHEAT DETECTOR</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700;900&family=Outfit:wght@600;800;900&display=swap" rel="stylesheet">
+  <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='favicon.svg') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <script>
+    (function () {
+      var saved = localStorage.getItem("theme");
+      var dark = window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches;
+      document.documentElement.setAttribute("data-theme", saved || (dark ? "dark" : "light"));
+    })();
+  </script>
 </head>
 <body>
-  <div class="container">
-    <header>
-      <div>
-        <h1>FAIR SQUARE</h1>
-        <p>EXPLAINABLE CHESS ENGINE ASSISTANCE DETECTION PIPELINE</p>
+  <header class="topbar">
+    <div class="brand">
+      <div class="brand-icon">FS</div>
+      <span class="brand-title">FAIR<span class="highlight-text">SQUARE</span></span>
+      <span class="sticker mini-sticker">BETA v1.0</span>
+    </div>
+    <button id="themeToggle" class="theme-toggle neo-btn" type="button" aria-label="Toggle dark mode">
+      <span id="themeLabel">NEON MODE</span>
+    </button>
+  </header>
+
+  <main class="container">
+    <section class="hero">
+      <div class="sticker-row">
+        <span class="sticker yellow-sticker">100% STATISTICAL</span>
+        <span class="sticker pink-sticker">NO DEEP LEARNING</span>
+        <span class="sticker cyan-sticker">CHESS.COM API</span>
       </div>
-      <button id="theme-toggle-btn" class="theme-toggle-btn" onclick="toggleTheme()">Theme: Light</button>
-    </header>
+      <h1 class="hero-title">IS THIS PLAYER <span class="text-bg-yellow">PLAYING FAIR</span> OR <span class="text-bg-pink">CHEATING?</span></h1>
+      <p class="hero-sub">Enter a chess.com username. Our machine learning model analyzes move timing variations, sub-second move patterns, and time controls. Supported for ratings up to <strong>{{ max_elo }} ELO</strong>.</p>
+    </section>
 
-    <main>
-      <section class="nb-card">
-        <div class="tab-container">
-          <button class="tab-btn active" id="tab-chesscom" onclick="switchTab('chesscom')">Chess.com Username</button>
-          <button class="tab-btn" id="tab-pgn" onclick="switchTab('pgn')">Raw PGN Upload</button>
-        </div>
-
-        <!-- Chess.com Search Form -->
-        <div id="form-chesscom">
-          <form id="chesscom-search-form" onsubmit="submitChessComSearch(event)">
-            <div class="grid-2">
-              <div class="form-group">
-                <label for="username">Chess.com Username</label>
-                <input type="text" id="username" name="username" placeholder="e.g. Hikaru, MagnusCarlsen" required>
-              </div>
-              <div class="form-group">
-                <label for="max_games">Number of Games (Max 30)</label>
-                <input type="number" id="max_games" name="max_games" value="10" min="1" max="30">
-              </div>
-            </div>
-            <div class="grid-2">
-              <div class="form-group">
-                <label for="engine_depth">Stockfish Depth</label>
-                <select id="engine_depth" name="engine_depth">
-                  <option value="10" selected>Depth 10 (Fast & Memory Safe)</option>
-                  <option value="15">Depth 15 (Deep Engine Analysis)</option>
-                </select>
-              </div>
-            </div>
-            <button type="submit" class="nb-btn">Analyze Chess.com Games</button>
-          </form>
-        </div>
-
-        <!-- Raw PGN Upload Form -->
-        <div id="form-pgn" style="display: none;">
-          <form id="pgn-upload-form" onsubmit="submitPgnUpload(event)">
-            <div class="form-group">
-              <label for="pgn_text">Paste PGN Game Text</label>
-              <textarea id="pgn_text" name="pgn_text" rows="7" placeholder="Paste PGN games here..." oninput="autoExtractPgnPlayers()" required></textarea>
-            </div>
-
-            <div class="grid-2">
-              <div class="form-group">
-                <label for="pgn_selected_player">Target Player to Analyze</label>
-                <select id="pgn_selected_player" name="pgn_selected_player">
-                  <option value="white" selected>White Player (Default)</option>
-                  <option value="black">Black Player</option>
-                </select>
-              </div>
-              <div class="form-group">
-                <label for="pgn_engine_depth">Stockfish Depth</label>
-                <select id="pgn_engine_depth" name="pgn_engine_depth">
-                  <option value="10" selected>Depth 10 (Fast & Memory Safe)</option>
-                  <option value="15">Depth 15 (Deep Engine Analysis)</option>
-                </select>
-              </div>
-            </div>
-
-            <button type="submit" class="nb-btn nb-btn-secondary">Analyze PGN Text</button>
-          </form>
-        </div>
-      </section>
-
-      <!-- Status & Progress Section -->
-      <section id="status-section" class="nb-card" style="display: none;">
-        <h2 class="nb-card-title">ANALYSIS IN PROGRESS</h2>
-        <p id="status-message">Initializing Stockfish multi-PV engine pipeline...</p>
-        <div class="progress-bar-outer">
-          <div id="progress-bar" class="progress-bar-inner"></div>
-        </div>
-        <p id="status-detail" style="font-family: var(--font-mono); font-size: 0.9rem;">Task ID: <span id="task-id-display">N/A</span></p>
-      </section>
-
-      <!-- Results Section -->
-      <section id="results-section" class="nb-card" style="display: none;">
-        <h2 class="nb-card-title">
-          <span>DETECTION REPORT: <span id="report-player-name">PLAYER</span></span>
-          <span id="report-risk-badge" style="font-size: 1rem; padding: 4px 12px; background: var(--border-color); color: var(--bg-color);">RISK</span>
-        </h2>
-
-        <div class="grid-2">
-          <div class="score-box" id="score-card">
-            <div style="font-weight: 900; text-transform: uppercase;">Suspicion Score</div>
-            <div id="suspicion-score-val" class="score-value">0%</div>
-            <div style="font-weight: 700;">Risk: <span id="risk-level-val">LOW</span></div>
-          </div>
-
-          <div style="border: 4px solid var(--border-color); padding: 20px; box-shadow: 4px 4px 0px var(--shadow-color); background: var(--card-bg);">
-            <div style="font-weight: 900; text-transform: uppercase; margin-bottom: 8px;">Analysis Context</div>
-            <p><strong>Total Games:</strong> <span id="res-total-games">0</span></p>
-            <p><strong>Player Elo:</strong> <span id="res-player-elo">1500</span></p>
-            <p><strong>Confidence:</strong> <span id="res-confidence">0%</span></p>
+    <section class="card form-card neo-box">
+      <form id="analyzeForm" autocomplete="off">
+        <div class="form-group">
+          <label for="username" class="neo-label">CHESS.COM USERNAME</label>
+          <div class="input-wrapper">
+            <span class="input-prefix">@</span>
+            <input id="username" type="text" class="neo-input" placeholder="e.g. hikaru, magnuscarlsen" required maxlength="40">
           </div>
         </div>
 
-        <h3 style="font-weight: 900; text-transform: uppercase; margin: 24px 0 12px 0;">Top Driving Behavioral Factors</h3>
-        <div id="factors-container" style="margin-bottom: 24px;"></div>
-
-        <h3 style="font-weight: 900; text-transform: uppercase; margin: 24px 0 12px 0;">Individual Game Breakdown</h3>
-        <div style="overflow-x: auto;">
-          <table>
-            <thead>
-              <tr>
-                <th>Game / Event</th>
-                <th>White vs Black</th>
-                <th>Moves</th>
-                <th>Avg CPL</th>
-                <th>SF Match %</th>
-                <th>Max Streak</th>
-                <th>Streaks (>=3)</th>
-                <th>Crit Match %</th>
-                <th>Suspicion</th>
-              </tr>
-            </thead>
-            <tbody id="games-table-body"></tbody>
-          </table>
+        <div class="form-group">
+          <div class="slider-row">
+            <label for="games" class="neo-label">GAMES TO ANALYZE</label>
+            <output id="gamesValue" class="neo-pill">30 GAMES</output>
+          </div>
+          <input id="games" type="range" class="neo-range" min="{{ min_games }}" max="{{ max_games }}" step="10" value="30">
+          <div class="range-hint"><span>{{ min_games }} (QUICK)</span><span>{{ max_games }} (THOROUGH)</span></div>
         </div>
 
-        <div style="margin-top: 24px; border: 3px solid var(--border-color); padding: 12px; background: var(--card-bg); font-size: 0.85rem;">
-          <strong>Statistical Notice:</strong> <span id="res-legal-notice">This output represents statistical likelihood...</span>
-        </div>
-      </section>
-    </main>
-  </div>
+        <button id="submitBtn" class="btn neo-btn-main" type="submit">
+          <span>DETECT SUSPICION LEVEL</span>
+        </button>
+      </form>
+      <div id="error" class="error neo-box-sm" role="alert" hidden></div>
+    </section>
 
-  <script src="/static/js/app.js"></script>
+    <section id="loading" class="card loading neo-box" hidden>
+      <div class="loading-header">
+        <h2 class="loading-title">ANALYZING CHESS GAMES</h2>
+        <span id="loadingPercent" class="sticker yellow-sticker">0%</span>
+      </div>
+
+      <div class="neo-progress-container">
+        <div id="progressBar" class="neo-progress-bar"></div>
+      </div>
+
+      <div class="loading-steps">
+        <div id="step1" class="step-item active">
+          <span class="step-badge">[ 1 ]</span>
+          <span class="step-text">Connecting to Chess.com Public API...</span>
+        </div>
+        <div id="step2" class="step-item">
+          <span class="step-badge">[ 2 ]</span>
+          <span class="step-text">Downloading PGN archives & clock comments...</span>
+        </div>
+        <div id="step3" class="step-item">
+          <span class="step-badge">[ 3 ]</span>
+          <span class="step-text">Extracting move timing & variance features...</span>
+        </div>
+        <div id="step4" class="step-item">
+          <span class="step-badge">[ 4 ]</span>
+          <span class="step-text">Evaluating Random Forest model predictions...</span>
+        </div>
+      </div>
+    </section>
+
+    <section id="result" class="card neo-box" hidden>
+      <div class="result-top">
+        <div id="gauge" class="gauge neo-gauge">
+          <div class="gauge-inner">
+            <span id="scoreText">0%</span>
+            <small>SUSPICION</small>
+          </div>
+        </div>
+        <div class="summary">
+          <div class="player-header">
+            <h2 id="playerName">PLAYER</h2>
+            <span id="verdict" class="badge neo-badge">LOW SUSPICION</span>
+          </div>
+          <p id="interval" class="muted-text"></p>
+          <div class="stats-grid">
+            <div class="stat-box yellow-bg">
+              <strong id="statScored">0</strong>
+              <span>GAMES SCORED</span>
+            </div>
+            <div class="stat-box cyan-bg">
+              <strong id="statRating">0</strong>
+              <span>AVG RATING</span>
+            </div>
+            <div class="stat-box pink-bg">
+              <strong id="statFlagged">0</strong>
+              <span>FLAGGED GAMES</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <h3 class="section-heading"><span>GAME BY GAME BREAKDOWN</span></h3>
+      <div class="table-wrap neo-table-box">
+        <table class="neo-table">
+          <thead>
+            <tr>
+              <th>DATE</th>
+              <th>OPPONENT</th>
+              <th>TYPE</th>
+              <th>RATING</th>
+              <th>SUSPICION SCORE</th>
+            </tr>
+          </thead>
+          <tbody id="gamesBody"></tbody>
+        </table>
+      </div>
+      <div class="disclaimer neo-disclaimer">
+        <strong>DISCLAIMER:</strong> This tool produces a statistical estimate based on timing distributions. High scores justify further review, not immediate accusations.
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-box neo-box-sm">
+      <span>FAIR SQUARE CHESS DETECTOR &bull; BUILT WITH FLASK & SCIKIT-LEARN</span>
+    </div>
+  </footer>
+  <script src="{{ url_for('static', filename='app.js') }}"></script>
 </body>
 </html>
+

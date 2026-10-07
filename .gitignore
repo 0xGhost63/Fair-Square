@@ -1,0 +1,35 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# Environments
+.venv/
+venv/
+ENV/
+env/
+
+# Data & Downloaded Shards (Keep folder structure)
+data/raw/
+data/features.csv
+data/flagged_cache.json
+!data/.gitkeep
+
+# Trained Model Artifacts (Keep directory structure)
+models/*.joblib
+!models/.gitkeep
+
+# Evaluation & Test Output Artifacts
+tests/artifacts/*.csv
+tests/reports/
+!tests/artifacts/.gitkeep
+!tests/reports/.gitkeep
+
+# OS / Editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.log

@@ -1,39 +1,51 @@
-import unittest
-from fairsquare.features import FeatureExtractor, cp_to_win_probability
+"""Unit tests for feature extraction. Run with:  pytest tests -q"""
+import random
 
-class TestFeatures(unittest.TestCase):
-    def test_win_probability_conversion(self):
-        # 0 cp should equal 0.5 win probability
-        self.assertAlmostEqual(cp_to_win_probability(0.0), 0.5, places=3)
-        # Positive cp should be > 0.5
-        self.assertGreater(cp_to_win_probability(100.0), 0.5)
-        # Negative cp should be < 0.5
-        self.assertLess(cp_to_win_probability(-100.0), 0.5)
+import chess
+import chess.pgn
 
-    def test_feature_extraction(self):
-        sample_records = [
-            {
-                "move_number": 12,
-                "played_cp": 50,
-                "best_cp": 50,
-                "second_best_cp": 0,
-                "played_rank": 1,
-                "cp_gap": 50
-            },
-            {
-                "move_number": 13,
-                "played_cp": -100,
-                "best_cp": 50,
-                "second_best_cp": 20,
-                "played_rank": 3,
-                "cp_gap": 30
-            }
-        ]
-        feats = FeatureExtractor.extract_game_features(sample_records, player_elo=1500)
-        self.assertEqual(feats["total_analyzed_moves"], 2)
-        self.assertIn("criticality_sensitivity_ratio", feats)
-        self.assertIn("t1_match_rate", feats)
-        self.assertIn("wpl_high_crit", feats)
+from src.features import extract_features, parse_time_control, CLOCK_FEATURES
 
-if __name__ == "__main__":
-    unittest.main()
+
+def make_game(times, tc="300+0", seed=3):
+    """Random legal game where each side spends the given seconds per move."""
+    random.seed(seed)
+    game = chess.pgn.Game()
+    game.headers["TimeControl"] = tc
+    base, inc = parse_time_control(tc)
+    clocks = {chess.WHITE: base, chess.BLACK: base}
+    node, board = game, game.board()
+    for i in range(len(times) * 2):
+        moves = list(board.legal_moves)
+        if not moves:
+            break
+        move = random.choice(moves)
+        node = node.add_variation(move)
+        clocks[board.turn] = clocks[board.turn] - times[i // 2] + inc
+        node.set_clock(clocks[board.turn])
+        board.push(move)
+    return game
+
+
+def test_time_control_parsing():
+    assert parse_time_control("300+3") == (300, 3)
+    assert parse_time_control("600") == (600, 0)
+    assert parse_time_control("1/86400") == (0, 0)
+
+
+def test_all_features_present_and_finite():
+    feats = extract_features(make_game([3.0] * 40), chess.WHITE)
+    assert feats is not None
+    for name in CLOCK_FEATURES:
+        assert name in feats and feats[name] == feats[name]  # not NaN
+
+
+def test_constant_time_has_low_spread():
+    even = extract_features(make_game([4.0] * 40), chess.WHITE)
+    uneven = extract_features(make_game([1, 12, 2, 20, 1, 6, 3, 15] * 5), chess.WHITE)
+    assert even["cv_t"] < uneven["cv_t"]
+    assert even["near_median"] > uneven["near_median"]
+
+
+def test_short_game_rejected():
+    assert extract_features(make_game([3.0] * 6), chess.WHITE) is None
