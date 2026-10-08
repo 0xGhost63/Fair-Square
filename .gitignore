@@ -17,8 +17,8 @@ data/features.csv
 data/flagged_cache.json
 !data/.gitkeep
 
-# Trained Model Artifacts (Keep directory structure)
-models/*.joblib
+# Trained Model Artifacts (Tracked for instant web app execution)
+!models/*.joblib
 !models/.gitkeep
 
 # Evaluation & Test Output Artifacts
