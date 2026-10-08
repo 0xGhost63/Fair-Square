@@ -11,7 +11,8 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 MODEL_PATH = os.path.join(BASE_DIR, "models", "cheat_model.joblib")
 DATA_PATH = os.path.join(BASE_DIR, "data", "features.csv")
 
-# Stockfish is optional. Only needed if the model was trained with engine features.
-STOCKFISH_PATH = os.environ.get("STOCKFISH_PATH", "/usr/bin/stockfish")
+import shutil
+
+STOCKFISH_PATH = os.environ.get("STOCKFISH_PATH") or shutil.which("stockfish") or "/usr/bin/stockfish"
 ENGINE_DEPTH = 10
 ENGINE_MAX_MOVES = 30   # moves per game sent to the engine (keeps it fast)
