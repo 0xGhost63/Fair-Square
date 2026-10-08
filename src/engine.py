@@ -15,14 +15,21 @@ class Analyzer:
     def best(self, board):
         # score is from the point of view of the side to move
         info = self.engine.analyse(board, chess.engine.Limit(depth=self.depth))
-        return info["score"].relative.score(mate_score=1000), info["pv"][0]
+        pv = info.get("pv", [])
+        score = info.get("score")
+        cp = score.relative.score(mate_score=1000) if score is not None else 0
+        best_move = pv[0] if (pv and len(pv) > 0) else None
+        return (cp if cp is not None else 0), best_move
 
     def move_stats(self, board, move):
         """Return (centipawn loss, matched engine best move)."""
         best_cp, best_move = self.best(board)
+        if best_move is None:
+            return 0.0, False
         if move == best_move:
             return 0.0, True
         board.push(move)
         cp_after, _ = self.best(board)
         board.pop()
+        cp_after = cp_after if cp_after is not None else 0
         return float(min(max(0, best_cp + cp_after), 500)), False
