@@ -38,22 +38,95 @@ Strong human play looks similar to engine play, which makes cheating much harder
 - `guide.md` dataset link and training instructions.
 - `features/ideas.md` ideas for future work.
 
-## Quick start
+## Installation & Setup
 
-Install the requirements with `pip install -r requirements.txt`. Follow `guide.md` to build the dataset and train the model, which creates `models/cheat_model.joblib`. Then run `python app.py` and open http://127.0.0.1:5000.
+### Prerequisites
+- Python 3.10 or higher
+- Stockfish chess engine (version 16 or newer recommended)
 
-## Likely viva questions
+---
 
-Why a random forest or logistic regression and not a neural network? The dataset is small and tabular, these models train in seconds, and their decisions can be explained through feature importance. The training script compares both with cross-validation and keeps the better one.
+### Linux Setup
 
-How do you avoid data leakage? Players are split between training and test sets, so the model is always tested on people it has never seen. A random split by game would let the model memorise a player's style and inflate the scores.
+1. **Install Stockfish**:
+   - **Debian / Ubuntu / Pop!_OS**:
+     ```bash
+     sudo apt update && sudo apt install -y stockfish
+     ```
+   - **Arch Linux / Manjaro**:
+     ```bash
+     sudo pacman -S stockfish
+     ```
+   - **Fedora**:
+     ```bash
+     sudo dnf install stockfish
+     ```
 
-How were cheaters labelled? Lichess marks accounts closed for fair play violations. These accounts are used as positive examples. This is an imperfect proxy, and the limitations are listed in `guide.md`.
+2. **Clone and Create Virtual Environment**:
+   ```bash
+   git clone https://github.com/your-username/Fair-Square.git
+   cd "Fair Square"
+   python3 -m venv .venv
+   source .venv/bin/activate
+   ```
 
-Why is the output an average over games? One game proves nothing. Averaging many games reduces noise, and the interval shows how certain the result is.
+3. **Install Python Dependencies**:
+   ```bash
+   pip install --upgrade pip
+   pip install -r requirements.txt
+   ```
 
-Can the app prove cheating? No. It gives a statistical estimate. A high score justifies a closer look, not an accusation.
+4. **Verify Stockfish Path (Optional)**:
+   The application automatically detects Stockfish at `/usr/bin/stockfish`, `/usr/games/stockfish`, or via PATH. If Stockfish is installed in a custom directory, export the `STOCKFISH_PATH` environment variable:
+   ```bash
+   export STOCKFISH_PATH=/path/to/stockfish
+   ```
 
+5. **Run the Application**:
+   ```bash
+   python app.py
+   ```
+   Open your browser at `http://127.0.0.1:5000`.
+
+---
+
+### Windows Setup
+
+1. **Download Stockfish**:
+   - Download the Windows binary from the official Stockfish site: [https://stockfishchess.org/download/](https://stockfishchess.org/download/).
+   - Extract the downloaded archive.
+   - Rename the executable (e.g. `stockfish-windows-x86-64-avx2.exe`) to `stockfish.exe`.
+   - Place `stockfish.exe` directly inside the root folder of this project (`Fair Square/stockfish.exe`), or add its directory to your Windows System PATH.
+
+2. **Clone and Create Virtual Environment**:
+   Open Command Prompt (cmd) or PowerShell in the project directory:
+   ```cmd
+   python -m venv .venv
+   .venv\Scripts\activate
+   ```
+
+3. **Install Python Dependencies**:
+   ```cmd
+   python -m pip install --upgrade pip
+   pip install -r requirements.txt
+   ```
+
+4. **Custom Stockfish Path (Optional)**:
+   If you prefer not to place `stockfish.exe` in the project root, set the environment variable:
+   - In Command Prompt:
+     ```cmd
+     set STOCKFISH_PATH=C:\path\to\stockfish.exe
+     ```
+   - In PowerShell:
+     ```powershell
+     $env:STOCKFISH_PATH = "C:\path\to\stockfish.exe"
+     ```
+
+5. **Run the Application**:
+   ```cmd
+   python app.py
+   ```
+   Open your browser at `http://127.0.0.1:5000`.
 ## Honest limitations
 
 The model is trained on Lichess games and applied to chess.com games. Clock behaviour is similar, but the sites are not identical, so scores should be treated as relative. Labels come from account closures, which contain some noise. Cheaters who deliberately randomise their timing are harder to catch with clock features alone, which is why the engine features exist.

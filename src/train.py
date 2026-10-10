@@ -14,10 +14,13 @@ from sklearn.model_selection import GroupKFold, GroupShuffleSplit, cross_val_sco
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
 
+import sys
+
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import config
 from src.features import CLOCK_FEATURES, ENGINE_FEATURES
 
-ART_DIR = os.path.join("tests", "artifacts")
+ART_DIR = os.path.join(config.BASE_DIR, "tests", "artifacts")
 
 
 def main():

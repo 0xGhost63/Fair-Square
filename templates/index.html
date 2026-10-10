@@ -32,12 +32,12 @@
   <main class="container">
     <section class="hero">
       <div class="sticker-row">
-        <span class="sticker yellow-sticker">100% STATISTICAL</span>
-        <span class="sticker pink-sticker">NO DEEP LEARNING</span>
+        <span class="sticker yellow-sticker">STOCKFISH 16 INTEGRATED</span>
+        <span class="sticker pink-sticker">TACTICAL ACCURACY &amp; TIMING</span>
         <span class="sticker cyan-sticker">CHESS.COM API</span>
       </div>
       <h1 class="hero-title">IS THIS PLAYER <span class="text-bg-yellow">PLAYING FAIR</span> OR <span class="text-bg-pink">CHEATING?</span></h1>
-      <p class="hero-sub">Enter a chess.com username. Our machine learning model analyzes move timing variations, sub-second move patterns, and time controls. Supported for ratings up to <strong>{{ max_elo }} ELO</strong>.</p>
+      <p class="hero-sub">Enter a chess.com username. Our hybrid model evaluates move timing distributions alongside Stockfish 16 tactical engine accuracy (Centipawn Loss &amp; Top-1 move match). Supported for ratings up to <strong>{{ max_elo }} ELO</strong>.</p>
     </section>
 
     <section class="card form-card neo-box">
@@ -55,8 +55,17 @@
             <label for="games" class="neo-label">GAMES TO ANALYZE</label>
             <output id="gamesValue" class="neo-pill">30 GAMES</output>
           </div>
-          <input id="games" type="range" class="neo-range" min="{{ min_games }}" max="{{ max_games }}" step="10" value="30">
+          <input id="games" name="games" type="range" class="neo-range" min="{{ min_games }}" max="{{ max_games }}" step="10" value="30">
           <div class="range-hint"><span>{{ min_games }} (QUICK)</span><span>{{ max_games }} (THOROUGH)</span></div>
+        </div>
+
+        <div class="form-group">
+          <div class="slider-row">
+            <label for="depth" class="neo-label">STOCKFISH ENGINE DEPTH</label>
+            <output id="depthValue" class="neo-pill cyan-pill">DEPTH {{ default_depth }} (OPTIMAL)</output>
+          </div>
+          <input id="depth" name="depth" type="range" class="neo-range" min="{{ min_depth }}" max="{{ max_depth }}" step="2" value="{{ default_depth }}">
+          <div class="range-hint"><span>{{ min_depth }} (FAST)</span><span>{{ default_depth }} (OPTIMAL)</span><span>{{ max_depth }} (DEEP)</span></div>
         </div>
 
         <button id="submitBtn" class="btn neo-btn-main" type="submit">
@@ -83,15 +92,17 @@
         </div>
         <div id="step2" class="step-item">
           <span class="step-badge">[ 2 ]</span>
-          <span class="step-text">Downloading PGN archives & clock comments...</span>
+          <span class="step-text">Streaming PGN archives &amp; clock comments...</span>
         </div>
         <div id="step3" class="step-item">
           <span class="step-badge">[ 3 ]</span>
-          <span class="step-text">Extracting move timing & variance features...</span>
+          <span id="step3Text" class="step-text">Evaluating move accuracy with Stockfish 16 Engine...</span>
+          <span id="step3Counter" class="step-counter-badge" hidden>0 / 30</span>
         </div>
         <div id="step4" class="step-item">
           <span class="step-badge">[ 4 ]</span>
-          <span class="step-text">Evaluating Random Forest model predictions...</span>
+          <span id="step4Text" class="step-text">Evaluating Hybrid Engine + Timing Model...</span>
+          <span id="step4Counter" class="step-counter-badge" hidden>0 / 30</span>
         </div>
       </div>
     </section>
@@ -123,6 +134,18 @@
               <strong id="statFlagged">0</strong>
               <span>FLAGGED GAMES</span>
             </div>
+            <div class="stat-box purple-bg">
+              <strong id="statAcpl">-</strong>
+              <span>CENTIPAWN LOSS</span>
+            </div>
+            <div class="stat-box green-bg">
+              <strong id="statTop1">-</strong>
+              <span>TOP-1 MATCH</span>
+            </div>
+            <div class="stat-box orange-bg">
+              <strong id="statBlunder">-</strong>
+              <span>BLUNDER RATE</span>
+            </div>
           </div>
         </div>
       </div>
@@ -136,6 +159,8 @@
               <th>OPPONENT</th>
               <th>TYPE</th>
               <th>RATING</th>
+              <th>ACPL</th>
+              <th>TOP-1 MATCH</th>
               <th>SUSPICION SCORE</th>
             </tr>
           </thead>
@@ -143,7 +168,7 @@
         </table>
       </div>
       <div class="disclaimer neo-disclaimer">
-        <strong>DISCLAIMER:</strong> This tool produces a statistical estimate based on timing distributions. High scores justify further review, not immediate accusations.
+        <strong>DISCLAIMER:</strong> This tool combines statistical timing distributions with Stockfish 16 tactical analysis. High scores indicate anomalous patterns and justify further manual review, not immediate accusations.
       </div>
     </section>
   </main>

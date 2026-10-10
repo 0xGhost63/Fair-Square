@@ -21,20 +21,35 @@ def usable(g):
     )
 
 
-def fetch_recent_games(username, n, max_archives=12):
+def stream_usable_games(username, max_archives=None):
+    """Yield usable games (standard rated with clock data) one by one, newest first."""
     r = requests.get(f"{BASE}/player/{username}/games/archives", headers=HEADERS, timeout=15)
     if r.status_code == 404:
         raise PlayerNotFound(username)
     r.raise_for_status()
-    games = []
-    for url in r.json()["archives"][::-1][:max_archives]:      # newest month first
-        month = requests.get(url, headers=HEADERS, timeout=20)
-        month.raise_for_status()
-        for g in reversed(month.json().get("games", [])):      # newest game first
+    archives = r.json().get("archives", [])
+    if max_archives is not None:
+        archives = archives[::-1][:max_archives]
+    else:
+        archives = archives[::-1]
+
+    for url in archives:
+        try:
+            month = requests.get(url, headers=HEADERS, timeout=20)
+            month.raise_for_status()
+        except Exception:
+            continue
+        for g in reversed(month.json().get("games", [])):
             if usable(g):
-                games.append(g)
-                if len(games) >= n:
-                    return games
+                yield g
+
+
+def fetch_recent_games(username, n, max_archives=None):
+    games = []
+    for g in stream_usable_games(username, max_archives=max_archives):
+        games.append(g)
+        if len(games) >= n:
+            break
     return games
 
 

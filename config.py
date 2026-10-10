@@ -13,6 +13,14 @@ DATA_PATH = os.path.join(BASE_DIR, "data", "features.csv")
 
 import shutil
 
-STOCKFISH_PATH = os.environ.get("STOCKFISH_PATH") or shutil.which("stockfish") or "/usr/bin/stockfish"
+STOCKFISH_PATH = (
+    os.environ.get("STOCKFISH_PATH")
+    or shutil.which("stockfish")
+    or (os.path.join(BASE_DIR, "stockfish.exe") if os.path.exists(os.path.join(BASE_DIR, "stockfish.exe")) else None)
+    or (os.path.join(BASE_DIR, "stockfish") if os.path.exists(os.path.join(BASE_DIR, "stockfish")) else None)
+    or "/usr/bin/stockfish"
+)
 ENGINE_DEPTH = 10
+MIN_DEPTH = 6
+MAX_DEPTH = 14
 ENGINE_MAX_MOVES = 30   # moves per game sent to the engine (keeps it fast)
