@@ -7,9 +7,9 @@
   --muted: #4A4A4A;
   --border: #000000;
   --border-width: 3px;
-  --shadow-sm: 3px 3px 0px #000000;
-  --shadow-md: 6px 6px 0px #000000;
-  --shadow-lg: 10px 10px 0px #000000;
+  --shadow-sm: 3px 3px 0px #00F0FF;
+  --shadow-md: 6px 6px 0px #00F0FF;
+  --shadow-lg: 10px 10px 0px #00F0FF;
   
   --accent-yellow: #FFDE59;
   --accent-pink: #FF66C4;
@@ -50,12 +50,33 @@
 
 body {
   font-family: 'Space Grotesk', 'Outfit', system-ui, -apple-system, sans-serif;
-  background-color: var(--bg);
-  background-image: radial-gradient(var(--border) 1px, transparent 1px);
-  background-size: 24px 24px;
+  background-color: #080808;
   color: var(--text);
   min-height: 100vh;
   line-height: 1.4;
+  position: relative;
+  overflow-x: hidden;
+}
+
+/* Perspective Grid Background - React Bits Pro WebGL Engine */
+.perspective-grid-canvas {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 0;
+  display: block;
+}
+
+/* Elevate ALL layout elements above the grid background */
+.topbar,
+.container,
+footer,
+.footer {
+  position: relative;
+  z-index: 1;
 }
 
 /* Header & Navigation */
@@ -88,7 +109,7 @@ body {
 
 .brand-title {
   text-transform: uppercase;
-  color: var(--text);
+  color: #ffffff;
 }
 
 .highlight-text {
@@ -185,6 +206,7 @@ body {
   text-transform: uppercase;
   margin-bottom: 16px;
   letter-spacing: -0.03em;
+  color: #ffffff;
 }
 
 .text-bg-yellow {

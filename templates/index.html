@@ -18,6 +18,8 @@
   </script>
 </head>
 <body>
+  <!-- Perspective Grid Background (React Bits Pro exact WebGL engine) -->
+  <canvas id="perspective-grid-canvas" class="perspective-grid-canvas" aria-hidden="true"></canvas>
   <header class="topbar">
     <div class="brand">
       <div class="brand-icon">FS</div>
@@ -178,6 +180,7 @@
       <span>FAIR SQUARE CHESS DETECTOR &bull; BUILT WITH FLASK & SCIKIT-LEARN</span>
     </div>
   </footer>
+  <script src="{{ url_for('static', filename='perspective-grid.js') }}"></script>
   <script src="{{ url_for('static', filename='app.js') }}"></script>
 </body>
 </html>
