@@ -20,7 +20,7 @@ Strong human play looks similar to engine play, which makes cheating much harder
 2. Each game gives one feature row for the player's side.
 3. The model outputs a cheating probability for each game.
 4. The suspicion rate is the average of these probabilities. A 95 percent interval is shown, which is wide for few games and narrow for many games.
-5. A verdict is attached: below 30 is low, 30 to 55 is moderate, above 55 is high.
+5. A verdict is attached based on the validation 1% False Positive Rate threshold (~50%): below 35% indicates low suspicion consistent with clean play, 35% to 50% indicates moderate variation (inconclusive), and 50% or above flags an elevated statistical anomaly. The output serves strictly as a suspicion indicator for review, not proof of cheating.
 
 ## Project structure
 
@@ -86,7 +86,7 @@ Strong human play looks similar to engine play, which makes cheating much harder
    ```bash
    python app.py
    ```
-   Open your browser at `http://127.0.0.1:5000`.
+   Open your browser at `http://127.0.0.1:8000`.
 
 ---
 

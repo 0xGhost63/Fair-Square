@@ -10,11 +10,17 @@ __pycache__/
 venv/
 ENV/
 env/
+ghost/
 
 # Data & Downloaded Shards (Keep folder structure)
 data/raw/
+data/raw_sample/
 data/features.csv
 data/flagged_cache.json
+data/engine_features.csv
+data/features_checkpoint*
+dataset.csv
+bin/
 !data/.gitkeep
 
 # Trained Model Artifacts (Tracked for instant web app execution)

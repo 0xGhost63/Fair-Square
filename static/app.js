@@ -1,18 +1,5 @@
 // Frontend logic: theme toggle, form submit, rendering the result.
 (function () {
-  var root = document.documentElement;
-  var themeLabel = document.getElementById("themeLabel");
-
-  function applyLabel() {
-    themeLabel.textContent = root.getAttribute("data-theme") === "dark" ? "DAYLIGHT MODE" : "NEON MODE";
-  }
-  document.getElementById("themeToggle").addEventListener("click", function () {
-    var next = root.getAttribute("data-theme") === "dark" ? "light" : "dark";
-    root.setAttribute("data-theme", next);
-    localStorage.setItem("theme", next);
-    applyLabel();
-  });
-  applyLabel();
 
   var slider = document.getElementById("games");
   var sliderValue = document.getElementById("gamesValue");
@@ -46,10 +33,10 @@
   var result = document.getElementById("result");
   var button = document.getElementById("submitBtn");
 
-  // green for low, yellow/orange for moderate, bright red for high
+  // green for low (<35), yellow for moderate (35-50), red for high (>=50, 1% FPR threshold)
   function colorFor(score) {
-    if (score < 30) return "var(--good)";
-    if (score < 55) return "var(--accent-yellow)";
+    if (score < 35) return "var(--good)";
+    if (score < 50) return "var(--accent-yellow)";
     return "var(--bad)";
   }
 
@@ -140,20 +127,52 @@
     if (step4Text) step4Text.textContent = "Evaluating Hybrid Engine + Timing Model...";
   }
 
+  var catAnim = null;
+  function startCatAnimation() {
+    var container = document.getElementById("catAnimation");
+    if (!container || !window.lottie) return;
+    if (!catAnim) {
+      catAnim = window.lottie.loadAnimation({
+        container: container,
+        renderer: "svg",
+        loop: true,
+        autoplay: true,
+        path: "/static/orangecat/animation.json"
+      });
+    } else {
+      catAnim.goToAndPlay(0, true);
+    }
+  }
+
+  function stopCatAnimation() {
+    if (catAnim) {
+      catAnim.pause();
+    }
+  }
+
+  function setCatStatus(text) {
+    var el = document.getElementById("catStatusText");
+    if (el) el.textContent = text;
+  }
+
   function finishProgressAnimation(callback) {
     if (progressTimer) clearInterval(progressTimer);
-    if (progressBar) progressBar.style.width = "100%";
-    if (loadingPercent) loadingPercent.textContent = "100%";
-    [1, 2, 3, 4].forEach(setStepCompleted);
-    setTimeout(callback, 350);
+    if (callback) callback();
   }
 
   form.addEventListener("submit", function (e) {
     e.preventDefault();
     errorBox.hidden = true; result.hidden = true; loading.hidden = false; button.disabled = true;
+    startCatAnimation();
+    setCatStatus("INITIALIZING ENGINE PIPELINE...");
 
     var username = document.getElementById("username").value.trim();
+    var cleanUser = username.replace(/^@+/, "");
+    var userEl = document.getElementById("loadingUsername");
+    if (userEl) userEl.textContent = "@" + (cleanUser || "player") + "'s";
     var gamesCount = parseInt(slider.value, 10);
+    var gamesCountEl = document.getElementById("loadingGamesCount");
+    if (gamesCountEl) gamesCountEl.textContent = "0 / " + gamesCount;
     var depthVal = depthSlider ? parseInt(depthSlider.value, 10) : 10;
     resetSteps(gamesCount, depthVal);
 
@@ -167,13 +186,15 @@
         try {
           var data = JSON.parse(event.data);
           if (data.type === "step") {
-            if (data.step === 1) { setStepActive(1); }
-            else if (data.step === 2) { setStepCompleted(1); setStepActive(2); }
-            else if (data.step === 3) { setStepCompleted(2); setStepActive(3); }
-            else if (data.step === 4) { setStepCompleted(3); setStepActive(4); }
+            if (data.step === 1) { setStepActive(1); setCatStatus("CONNECTING TO CHESS.COM PUBLIC API..."); }
+            else if (data.step === 2) { setStepCompleted(1); setStepActive(2); setCatStatus("STREAMING RATED PGN ARCHIVES..."); }
+            else if (data.step === 3) { setStepCompleted(2); setStepActive(3); setCatStatus("STOCKFISH 16 EVALUATING MOVES..."); }
+            else if (data.step === 4) { setStepCompleted(3); setStepActive(4); setCatStatus("CALCULATING TACTICAL ANOMALY METRICS..."); }
           } else if (data.type === "progress") {
             var cur = data.current;
             var tot = data.total;
+            if (gamesCountEl) gamesCountEl.textContent = cur + " / " + tot;
+            setCatStatus("INSPECTING GAME " + cur + " / " + tot + (data.opponent ? " (vs @" + data.opponent + ")" : "") + "...");
             if (step3Counter) {
               step3Counter.textContent = cur + " / " + tot;
               step3Counter.hidden = false;
@@ -198,6 +219,7 @@
             }
           } else if (data.type === "done") {
             es.close();
+            stopCatAnimation();
             finishProgressAnimation(function () {
               loading.hidden = true;
               render(data.result);
@@ -205,6 +227,7 @@
             });
           } else if (data.type === "error") {
             es.close();
+            stopCatAnimation();
             loading.hidden = true;
             errorBox.textContent = data.error || "Analysis error occurred.";
             errorBox.hidden = false;
@@ -221,6 +244,7 @@
         if (!receivedAnyEvent) {
           fallbackPost(username, gamesCount, depthVal);
         } else {
+          stopCatAnimation();
           loading.hidden = true;
           errorBox.textContent = "Connection interrupted during analysis. Please try again.";
           errorBox.hidden = false;
@@ -241,12 +265,14 @@
         .then(function (r) {
           if (!r.ok) throw new Error(r.data.error || "Something went wrong.");
           finishProgressAnimation(function () {
+            stopCatAnimation();
             loading.hidden = true;
             render(r.data);
             button.disabled = false;
           });
         })
         .catch(function (err) {
+          stopCatAnimation();
           loading.hidden = true;
           errorBox.textContent = err.message;
           errorBox.hidden = false;

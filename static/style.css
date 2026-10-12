@@ -3,6 +3,7 @@
   --bg: #F4F0EA;
   --bg-pattern: #EBE5DC;
   --surface: #FFFFFF;
+  --surface-glass: rgba(255, 255, 255, 0.88);
   --text: #000000;
   --muted: #4A4A4A;
   --border: #000000;
@@ -27,6 +28,7 @@
   --bg: #0F172A;
   --bg-pattern: #1E293B;
   --surface: #1E293B;
+  --surface-glass: rgba(26, 36, 54, 0.86);
   --text: #FFFFFF;
   --muted: #94A3B8;
   --border: #000000;
@@ -407,109 +409,95 @@ footer,
   font-weight: 800;
 }
 
-/* Loading State */
-.loading {
-  text-align: left;
-  padding: 30px;
-}
-
-.loading-header {
+/* Loading State - Fixed Screen-Centered Cat (Scroll-Independent) */
+.loading-simple {
+  position: fixed;
+  inset: 0;
   display: flex;
-  justify-content: space-between;
+  justify-content: center;
   align-items: center;
-  margin-bottom: 16px;
+  z-index: 9999;
+  pointer-events: none;
+  background: transparent;
 }
 
-.loading-title {
-  font-size: 1.4rem;
-  font-weight: 900;
-  letter-spacing: 0.03em;
+.loading-simple[hidden] {
+  display: none !important;
 }
 
-.neo-progress-container {
-  width: 100%;
-  height: 24px;
-  background: var(--surface);
+.loading-card {
+  background: var(--surface-glass, rgba(30, 41, 59, 0.86));
+  backdrop-filter: blur(14px) saturate(180%);
+  -webkit-backdrop-filter: blur(14px) saturate(180%);
   border: var(--border-width) solid var(--border);
-  box-shadow: var(--shadow-sm);
-  border-radius: 8px;
-  overflow: hidden;
-  margin-bottom: 24px;
-}
-
-.neo-progress-bar {
-  width: 0%;
-  height: 100%;
-  background: linear-gradient(90deg, var(--accent-yellow), var(--accent-cyan));
-  border-right: var(--border-width) solid var(--border);
-  transition: width 0.4s ease;
-}
-
-.loading-steps {
+  box-shadow: var(--shadow-md);
+  border-radius: 14px;
+  padding: 14px 18px 16px;
   display: flex;
   flex-direction: column;
-  gap: 10px;
-}
-
-.step-item {
-  display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 12px 16px;
-  background: var(--bg-pattern);
-  border: var(--border-width) solid var(--border);
-  box-shadow: 2px 2px 0px var(--border);
-  border-radius: 8px;
+  gap: 10px;
+  max-width: 320px;
+  width: 85%;
+  pointer-events: auto;
+  animation: popIn 0.22s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+@keyframes popIn {
+  from {
+    opacity: 0;
+    transform: scale(0.92);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.cat-simple-spinner {
+  width: 180px;
+  height: 132px;
+  max-width: 100%;
+}
+
+.loading-caption {
+  font-family: 'Space Grotesk', 'Outfit', system-ui, sans-serif;
+  font-size: 0.88rem;
   font-weight: 700;
-  opacity: 0.4;
-  transition: opacity 0.3s ease, background 0.3s ease, transform 0.3s ease;
+  color: var(--text);
+  text-align: center;
+  line-height: 1.4;
+  margin: 0;
+  letter-spacing: -0.01em;
 }
 
-.step-item.active {
-  opacity: 1;
+.loading-username {
   background: var(--accent-yellow);
-  color: #000;
-  transform: translateX(4px);
-}
-
-.step-item.completed {
-  opacity: 1;
-  background: var(--accent-green);
-  color: #000;
-}
-
-.step-badge {
-  font-weight: 900;
-  font-size: 0.9rem;
-}
-
-.step-text {
-  font-size: 0.95rem;
-}
-
-.step-counter-badge {
-  margin-left: auto;
-  font-family: inherit;
-  font-weight: 900;
-  font-size: 0.8rem;
-  letter-spacing: 0.05em;
-  background: var(--accent-green);
   color: #000000;
-  padding: 4px 10px;
-  border: var(--border-width) solid var(--border);
+  padding: 1px 7px;
+  border-radius: 4px;
+  border: 2px solid var(--border);
+  font-weight: 800;
+  display: inline-block;
+  vertical-align: baseline;
   box-shadow: 2px 2px 0px var(--border);
-  border-radius: 6px;
+}
+
+.loading-counter-badge {
+  font-family: 'Space Grotesk', 'Outfit', system-ui, sans-serif;
+  font-size: 0.76rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
   text-transform: uppercase;
-  white-space: nowrap;
-}
-
-.pulse-anim {
-  animation: neo-pulse 1.2s infinite ease-in-out alternate;
-}
-
-@keyframes neo-pulse {
-  0% { transform: rotate(-2deg) scale(1); }
-  100% { transform: rotate(1deg) scale(1.04); }
+  background: var(--accent-cyan);
+  color: #000000;
+  padding: 3px 12px;
+  border: 2px solid var(--border);
+  box-shadow: 2px 2px 0px var(--border);
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
 }
 
 /* Results Layout */

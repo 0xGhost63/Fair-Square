@@ -1,4 +1,5 @@
 import json
+import os
 import time
 
 from flask import Flask, jsonify, render_template, request, Response, stream_with_context
@@ -45,8 +46,7 @@ def analyze():
         return jsonify({"error": "Enter a valid chess.com username."}), 400
     if not config.MIN_GAMES <= n <= config.MAX_GAMES:
         return jsonify({"error": f"Games must be between {config.MIN_GAMES} and {config.MAX_GAMES}."}), 400
-    if not config.MIN_DEPTH <= depth <= config.MAX_DEPTH:
-        depth = config.ENGINE_DEPTH
+    depth = config.ENGINE_DEPTH
 
     key = (username.lower(), n, depth)
     if key in _cache and time.time() - _cache[key][0] < CACHE_SECONDS:
@@ -84,8 +84,7 @@ def analyze_stream():
         return jsonify({"error": "Enter a valid chess.com username."}), 400
     if not config.MIN_GAMES <= n <= config.MAX_GAMES:
         return jsonify({"error": f"Games must be between {config.MIN_GAMES} and {config.MAX_GAMES}."}), 400
-    if not config.MIN_DEPTH <= depth <= config.MAX_DEPTH:
-        depth = config.ENGINE_DEPTH
+    depth = config.ENGINE_DEPTH
 
     def generate():
         key = (username.lower(), n, depth)
@@ -118,4 +117,11 @@ def analyze_stream():
 
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    port = int(os.environ.get("PORT", 8000))
+    try:
+        app.run(debug=True, port=port)
+    except OSError:
+        fallback_port = 8080
+        print(f"Port {port} in use. Retrying on fallback port {fallback_port}...")
+        app.run(debug=True, port=fallback_port)
+

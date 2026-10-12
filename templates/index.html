@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="light">
+<html lang="en" data-theme="dark">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -7,15 +7,8 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700;900&family=Outfit:wght@600;800;900&display=swap" rel="stylesheet">
-    <link rel="icon" type="image/png" href="{{ url_for('static', filename='favicon.png') }}">
+  <link rel="icon" type="image/png" href="{{ url_for('static', filename='favicon.png') }}">
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-  <script>
-    (function () {
-      var saved = localStorage.getItem("theme");
-      var dark = window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches;
-      document.documentElement.setAttribute("data-theme", saved || (dark ? "dark" : "light"));
-    })();
-  </script>
 </head>
 <body>
   <!-- Perspective Grid Background (React Bits Pro exact WebGL engine) -->
@@ -26,9 +19,6 @@
       <span class="brand-title">FAIR<span class="highlight-text">SQUARE</span></span>
       <span class="sticker mini-sticker">BETA v1.0</span>
     </div>
-    <button id="themeToggle" class="theme-toggle neo-btn" type="button" aria-label="Toggle dark mode">
-      <span id="themeLabel">NEON MODE</span>
-    </button>
   </header>
 
   <main class="container">
@@ -77,34 +67,14 @@
       <div id="error" class="error neo-box-sm" role="alert" hidden></div>
     </section>
 
-    <section id="loading" class="card loading neo-box" hidden>
-      <div class="loading-header">
-        <h2 class="loading-title">ANALYZING CHESS GAMES</h2>
-        <span id="loadingPercent" class="sticker yellow-sticker">0%</span>
-      </div>
-
-      <div class="neo-progress-container">
-        <div id="progressBar" class="neo-progress-bar"></div>
-      </div>
-
-      <div class="loading-steps">
-        <div id="step1" class="step-item active">
-          <span class="step-badge">[ 1 ]</span>
-          <span class="step-text">Connecting to Chess.com Public API...</span>
-        </div>
-        <div id="step2" class="step-item">
-          <span class="step-badge">[ 2 ]</span>
-          <span class="step-text">Streaming PGN archives &amp; clock comments...</span>
-        </div>
-        <div id="step3" class="step-item">
-          <span class="step-badge">[ 3 ]</span>
-          <span id="step3Text" class="step-text">Evaluating move accuracy with Stockfish 16 Engine...</span>
-          <span id="step3Counter" class="step-counter-badge" hidden>0 / 30</span>
-        </div>
-        <div id="step4" class="step-item">
-          <span class="step-badge">[ 4 ]</span>
-          <span id="step4Text" class="step-text">Evaluating Hybrid Engine + Timing Model...</span>
-          <span id="step4Counter" class="step-counter-badge" hidden>0 / 30</span>
+    <section id="loading" class="loading-simple" hidden>
+      <div class="loading-card">
+        <div id="catAnimation" class="cat-simple-spinner"></div>
+        <p class="loading-caption">
+          Hold tight! Mittens is hunting anomalies in <span id="loadingUsername" class="loading-username">@player's</span> games...
+        </p>
+        <div class="loading-counter-badge">
+          <span id="loadingGamesCount">0 / 30</span> games analyzed
         </div>
       </div>
     </section>
@@ -170,7 +140,7 @@
         </table>
       </div>
       <div class="disclaimer neo-disclaimer">
-        <strong>DISCLAIMER:</strong> This tool combines statistical timing distributions with Stockfish 16 tactical analysis. High scores indicate anomalous patterns and justify further manual review, not immediate accusations.
+        <strong>DISCLAIMER:</strong> This tool computes a statistical suspicion indicator based on move-level tactical similarity against Stockfish 16, calibrated at a 1% False Positive Rate threshold (~50%). High scores reflect anomalous engine similarity and warrant further manual review; they do not constitute proof of cheating.
       </div>
     </section>
   </main>
@@ -180,6 +150,7 @@
       <span>FAIR SQUARE CHESS DETECTOR &bull; BUILT WITH FLASK & SCIKIT-LEARN</span>
     </div>
   </footer>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/lottie-web/5.12.2/lottie.min.js"></script>
   <script src="{{ url_for('static', filename='perspective-grid.js') }}"></script>
   <script src="{{ url_for('static', filename='app.js') }}"></script>
 </body>

@@ -9,7 +9,7 @@ import pandas as pd
 
 import config
 from src import chesscom
-from src.features import extract_features, ENGINE_FEATURES
+from src.features import ENGINE_FEATURE_NAMES, extract_single_side_engine_features
 
 _bundle = None
 
@@ -23,35 +23,52 @@ def load_bundle(path=None):
 
 
 def verdict(score):
-    if score < 30:
-        return "Low suspicion"
-    if score < 55:
-        return "Moderate suspicion"
-    return "High suspicion"
+    """Calibrated against validation 1% FPR threshold (~50%).
+    Serves strictly as a statistical anomaly indicator, not conclusive proof.
+    """
+    if score < 35.0:
+        return "Low suspicion (consistent with clean play)"
+    if score < 50.0:
+        return "Moderate variation (inconclusive indicator)"
+    return "Elevated anomaly (statistical suspicion indicator, not proof)"
 
 
 def analyze_player_stream(username, n_games, depth=None):
     bundle = load_bundle()
     if bundle is None:
         raise RuntimeError("Model file not found. Train the model first (see guide.md).")
+
     features = bundle["features"]
     engine_depth = int(depth) if depth is not None else config.ENGINE_DEPTH
-    analyzer = None
-    if any(f in ENGINE_FEATURES for f in features):
-        from src.engine import Analyzer
-        analyzer = Analyzer(depth=engine_depth)
+
+    from src.engine import Analyzer
+    analyzer = Analyzer(depth=engine_depth)
+
     try:
         results = []
         yield {"type": "step", "step": 1, "text": "Connected to Chess.com Public API..."}
-        yield {"type": "step", "step": 2, "text": "Streaming PGN archives & clock comments..."}
-        yield {"type": "step", "step": 3, "text": f"Evaluating move accuracy with Stockfish 16 Engine (Depth {engine_depth})..."}
+        yield {"type": "step", "step": 2, "text": "Streaming recent rated PGN archives..."}
+        yield {"type": "step", "step": 3, "text": f"Evaluating moves with Stockfish 16 Engine (Depth {engine_depth})..."}
 
         for g in chesscom.stream_usable_games(username):
             color, rating, opponent = chesscom.side_of(g, username)
             game = chesscom.parse_pgn(g["pgn"])
-            feats = extract_features(game, color, analyzer) if game else None
+            if not game:
+                continue
+
+            # Scale Chess.com rating to training Lichess scale
+            train_elo = min(config.MAX_ELO, max(1000, int(1.05 * rating + 100)))
+
+            if set(features).issubset(set(ENGINE_FEATURE_NAMES)):
+                feats = extract_single_side_engine_features(game, color, train_elo, analyzer)
+            else:
+                # Backwards compatibility for older clock models if needed
+                from src.features import extract_features
+                feats = extract_features(game, color, analyzer)
+
             if feats is None:
                 continue
+
             x = pd.DataFrame([[feats[f] for f in features]], columns=features)
             prob = float(bundle["model"].predict_proba(x)[0, 1])
             res = {
@@ -66,8 +83,11 @@ def analyze_player_stream(username, n_games, depth=None):
                 res["acpl"] = round(feats["acpl"], 1)
             if "top1_match" in feats:
                 res["top1_match"] = round(feats["top1_match"] * 100, 1)
+            if "non_trivial_top3_match" in feats:
+                res["top3_match"] = round(feats["non_trivial_top3_match"] * 100, 1)
             if "blunder_rate" in feats:
                 res["blunder_rate"] = round(feats["blunder_rate"] * 100, 1)
+
             results.append(res)
 
             yield {
@@ -80,20 +100,25 @@ def analyze_player_stream(username, n_games, depth=None):
             if len(results) >= n_games:
                 break
     finally:
-        if analyzer:
-            analyzer.close()
+        analyzer.close()
 
     if not results:
-        raise ValueError("No usable games with clock data were found for this player.")
+        raise ValueError("No usable games found for this player.")
 
-    yield {"type": "step", "step": 4, "text": "Evaluating Hybrid Engine + Timing Model..."}
+    yield {"type": "step", "step": 4, "text": "Aggregating Player Suspicion Metrics..."}
 
     avg_rating = int(np.mean([r["rating"] for r in results]))
     if avg_rating > config.MAX_ELO:
         raise ValueError(f"Average rating {avg_rating} is above the supported limit of {config.MAX_ELO}.")
 
     probs = np.array([r["probability"] for r in results])
-    score = float(probs.mean())
+
+    # Outlier-aware aggregation: catches partial/hybrid cheaters without diluting single cheated games
+    if len(probs) >= 3:
+        score = float(0.5 * probs.mean() + 0.5 * np.percentile(probs, 85))
+    else:
+        score = float(probs.mean())
+
     margin = 1.96 * probs.std(ddof=1) / math.sqrt(len(probs)) if len(probs) > 1 else 50.0
 
     avg_acpl = round(float(np.mean([r["acpl"] for r in results if "acpl" in r])), 1) if any("acpl" in r for r in results) else None
@@ -113,7 +138,7 @@ def analyze_player_stream(username, n_games, depth=None):
         "avg_acpl": avg_acpl,
         "avg_top1": avg_top1,
         "avg_blunder_rate": avg_blunder,
-        "has_engine": analyzer is not None or "acpl" in features,
+        "has_engine": True,
         "engine_depth": engine_depth,
         "games": results,
     }

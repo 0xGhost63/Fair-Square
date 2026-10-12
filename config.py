@@ -15,12 +15,17 @@ import shutil
 
 STOCKFISH_PATH = (
     os.environ.get("STOCKFISH_PATH")
+    or (os.path.join(BASE_DIR, "bin", "stockfish") if os.path.exists(os.path.join(BASE_DIR, "bin", "stockfish")) else None)
     or shutil.which("stockfish")
     or (os.path.join(BASE_DIR, "stockfish.exe") if os.path.exists(os.path.join(BASE_DIR, "stockfish.exe")) else None)
     or (os.path.join(BASE_DIR, "stockfish") if os.path.exists(os.path.join(BASE_DIR, "stockfish")) else None)
     or "/usr/bin/stockfish"
 )
-ENGINE_DEPTH = 10
-MIN_DEPTH = 6
-MAX_DEPTH = 14
-ENGINE_MAX_MOVES = 30   # moves per game sent to the engine (keeps it fast)
+ENGINE_DEPTH = 12          # Fixed deterministic depth for both training and application
+MIN_DEPTH = 12             # Fixed depth
+MAX_DEPTH = 12             # Fixed depth
+MAX_EVAL_CP = 600          # Skip decided positions where |eval| exceeds 600 cp
+MAX_MOVE_LOSS_CP = 300     # Clip per-move centipawn loss before computing ACPL
+ONLY_MOVE_GAP_CP = 75      # Tightened gap: top-1 is >= 75 cp better than top-2
+SKIP_OPENING_MOVES = 10    # Evaluate strictly from move 11 onwards (post-opening)
+
